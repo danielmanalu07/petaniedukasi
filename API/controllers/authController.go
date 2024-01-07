@@ -1,6 +1,9 @@
 package controllers
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
 	"petani_edukasi/database"
 	"petani_edukasi/models"
 	"time"
@@ -14,15 +17,32 @@ import (
 
 const SecretKey = "secret"
 
-func Register(c *fiber.Ctx) error {
-	var data map[string]string
+const (
+	uploadPathKTP  = "./ktpfiles"
+	uploadPathFoto = "./fotofiles"
+)
 
-	if err := c.BodyParser(&data); err != nil {
-		return err
+func init() {
+	if _, err := os.Stat(uploadPathKTP); os.IsNotExist(err) {
+		os.Mkdir(uploadPathKTP, os.ModePerm)
 	}
 
+	if _, err := os.Stat(uploadPathFoto); os.IsNotExist(err) {
+		os.Mkdir(uploadPathFoto, os.ModePerm)
+	}
+}
+
+func Register(c *fiber.Ctx) error {
+
+	name := c.FormValue("name")
+	address := c.FormValue("address")
+	age := c.FormValue("age")
+	hp := c.FormValue("hp")
+	email := c.FormValue("email")
+	passwords := c.FormValue("password")
+
 	existingUser := models.User{}
-	result := database.DB.Where("email = ?", data["email"]).First(&existingUser)
+	result := database.DB.Where("email = ?", passwords).First(&existingUser)
 	if result.RowsAffected > 0 {
 		c.Status(fiber.StatusConflict)
 		return c.JSON(fiber.Map{
@@ -30,7 +50,7 @@ func Register(c *fiber.Ctx) error {
 		})
 	}
 
-	password, err := bcrypt.GenerateFromPassword([]byte(data["password"]), 14)
+	password, err := bcrypt.GenerateFromPassword([]byte(passwords), 14)
 	if err != nil {
 		c.Status(fiber.StatusInternalServerError)
 		return c.JSON(fiber.Map{
@@ -38,10 +58,18 @@ func Register(c *fiber.Ctx) error {
 		})
 	}
 
+	ktpFileName := saveFile(c, "ktpfiles", "ktp")
+	fotoFileName := saveFile(c, "fotofiles", "foto")
+
 	user := models.User{
-		Name:     data["name"],
-		Email:    data["email"],
+		Name:     name,
+		Address:  address,
+		Age:      age,
+		HP:       hp,
+		Email:    email,
 		Password: password,
+		Ktp:      ktpFileName,
+		Foto:     fotoFileName,
 	}
 
 	if err := user.ValidateUser(); err != nil {
@@ -57,6 +85,20 @@ func Register(c *fiber.Ctx) error {
 	user.Password = nil
 
 	return c.JSON(user)
+}
+
+func saveFile(c *fiber.Ctx, uploadPath, formFieldName string) string {
+	file, err := c.FormFile(formFieldName)
+	if err != nil {
+		return ""
+	}
+
+	fileName := fmt.Sprintf("%d%s", time.Now().UnixNano(), filepath.Ext(file.Filename))
+	if err := c.SaveFile(file, filepath.Join(uploadPath, fileName)); err != nil {
+		return ""
+	}
+
+	return fileName
 }
 
 func Login(c *fiber.Ctx) error {
