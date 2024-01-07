@@ -70,6 +70,7 @@ func Register(c *fiber.Ctx) error {
 		Password: password,
 		Ktp:      ktpFileName,
 		Foto:     fotoFileName,
+		Status:   "0",
 	}
 
 	if err := user.ValidateUser(); err != nil {

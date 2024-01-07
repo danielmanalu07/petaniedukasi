@@ -25,4 +25,8 @@ func Setup(app *fiber.App) {
 	adminGroup.Post("/createedk", controllers.CreateEdukasi)
 	adminGroup.Put("/updateedk/:id", controllers.UpdateEdukasi)
 	adminGroup.Delete("/deleteedk/:id", controllers.DeleteEdukasi)
+
+	adminGroup.Use(middleware.RequireLogin)
+	adminGroup.Put("/updateuser/:id", controllers.UpdateStatusUser)
+	adminGroup.Get("/getuser", controllers.GetUser)
 }

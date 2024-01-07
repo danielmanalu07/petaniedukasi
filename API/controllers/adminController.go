@@ -138,3 +138,57 @@ func LogoutAdm(c *fiber.Ctx) error {
 		"message": "success",
 	})
 }
+
+func UpdateStatusUser(c *fiber.Ctx) error {
+	userID, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"message": "invalid user ID",
+		})
+	}
+
+	user := models.User{}
+	result := database.DB.First(&user, userID)
+	if result.Error != nil {
+		c.Status(fiber.StatusNotFound)
+		return c.JSON(fiber.Map{
+			"message": "user not found",
+		})
+	}
+
+	statusStr := c.Query("status")
+	status, err := strconv.Atoi(statusStr)
+	if err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"message": "invalid status value",
+		})
+	}
+
+	if err := user.UpdateStatus(status); err != nil {
+		c.Status(fiber.StatusBadRequest)
+		return c.JSON(fiber.Map{
+			"message": err.Error(),
+		})
+	}
+
+	database.DB.Save(&user)
+
+	return c.JSON(user)
+}
+
+func GetUser(c *fiber.Ctx) error {
+	var user []models.User
+
+	database.DB.Find(&user)
+
+	if len(user) == 0 {
+		c.Status(fiber.StatusNotFound)
+		return c.JSON(fiber.Map{
+			"message": "User not found",
+		})
+	}
+
+	return c.JSON(user)
+}
