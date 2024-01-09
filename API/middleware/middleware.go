@@ -42,7 +42,7 @@ func RequireLogin(c *fiber.Ctx) error {
 		})
 	}
 
-	c.Locals("claims", claims)
+	c.Locals("userID", claims.Issuer)
 
 	return c.Next()
 }

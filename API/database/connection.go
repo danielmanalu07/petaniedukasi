@@ -21,4 +21,6 @@ func Connect() {
 	connection.AutoMigrate(&models.User{})
 	connection.AutoMigrate(&models.Admin{})
 	connection.AutoMigrate(&models.Edukasi{})
+
+	connection.AutoMigrate(&models.Post{}, &models.Like{}, &models.Comment{})
 }

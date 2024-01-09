@@ -86,13 +86,28 @@ func UpdateEdukasi(c *fiber.Ctx) error {
 	title := c.FormValue("title")
 	description := c.FormValue("description")
 
+	newImage, newImageErr := c.FormFile("image")
+	if newImageErr == nil {
+		oldImagePath := filepath.Join(uploadPath, edukasi.Image)
+		_ = os.Remove(oldImagePath)
+
+		fileName := fmt.Sprintf("%d%s", time.Now().UnixNano(), filepath.Ext(newImage.Filename))
+		if err := c.SaveFile(newImage, filepath.Join(uploadPath, fileName)); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Failed to save new image file",
+			})
+		}
+
+		edukasi.Image = fileName
+	}
+
 	edukasi.Title = title
 	edukasi.Description = description
 
 	if err := edukasi.ValidateEdukasi(); err != nil {
 		c.Status(fiber.StatusBadRequest)
 		return c.JSON(fiber.Map{
-			"message": "validation error",
+			"message": "Validation error",
 			"errors":  err.Error(),
 		})
 	}

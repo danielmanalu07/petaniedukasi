@@ -14,6 +14,22 @@ func Setup(app *fiber.App) {
 	userGroup.Get("/profile", controllers.User)
 	userGroup.Post("/logout", controllers.Logout)
 
+	userGroup.Use(middleware.RequireLogin)
+	userGroup.Get("/idxpost", controllers.IndexPost)
+	userGroup.Post("/createPost", controllers.CreatePost)
+	userGroup.Get("/showpost", controllers.ShowPost)
+	userGroup.Put("/updatepost/:id", controllers.UpdatePost)
+	userGroup.Delete("/deletepost/:id", controllers.DeletePost)
+
+	userGroup.Post("/like/:id", controllers.LikePost)
+	userGroup.Delete("/deleteLike/:id", controllers.DeleteLikeDislike)
+	userGroup.Post("/dislike/:id", controllers.DislikePost)
+
+	userGroup.Get("/idxcomment", controllers.IndexComment)
+	userGroup.Post("/comment/:id", controllers.CreateComment)
+	userGroup.Put("/updatecomment/:id", controllers.UpdateComment)
+	userGroup.Delete("/deletecomment/:id", controllers.DeleteComment)
+
 	adminGroup := app.Group("/api/admin")
 	adminGroup.Post("/create", controllers.CreateAdmin)
 	adminGroup.Post("/loginadm", controllers.LoginAdmin)
