@@ -42,7 +42,7 @@ func Register(c *fiber.Ctx) error {
 	passwords := c.FormValue("password")
 
 	existingUser := models.User{}
-	result := database.DB.Where("email = ?", passwords).First(&existingUser)
+	result := database.DB.Where("email = ?", email).First(&existingUser)
 	if result.RowsAffected > 0 {
 		c.Status(fiber.StatusConflict)
 		return c.JSON(fiber.Map{
@@ -58,8 +58,38 @@ func Register(c *fiber.Ctx) error {
 		})
 	}
 
-	ktpFileName := saveFile(c, "ktpfiles", "ktp")
-	fotoFileName := saveFile(c, "fotofiles", "foto")
+	ktpFile := c.FormValue("ktp")
+	if ktpFile == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Failed to Get KTP File",
+		})
+	}
+
+	ktpFileName, err := saveFile(c, uploadPathKTP, ktpFile)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Error saving KTP file",
+			"error":   err.Error(),
+		})
+	}
+
+	fotoFile := c.FormValue("foto")
+	if fotoFile == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Failed to Get Foto File",
+		})
+	}
+
+	fotoFileName, err := saveFile(c, uploadPathFoto, fotoFile)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Error saving Foto file",
+			"error":   err.Error(),
+		})
+	}
+
+	fmt.Println("KTP File Name:", ktpFileName)
+	fmt.Println("Foto File Name:", fotoFileName)
 
 	user := models.User{
 		Name:     name,
@@ -71,6 +101,14 @@ func Register(c *fiber.Ctx) error {
 		Ktp:      ktpFileName,
 		Foto:     fotoFileName,
 		Status:   "0",
+	}
+
+	if err := database.DB.Create(&user).Error; err != nil {
+		c.Status(fiber.StatusInternalServerError)
+		return c.JSON(fiber.Map{
+			"message": "error creating user",
+			"error":   err.Error(),
+		})
 	}
 
 	if err := user.ValidateUser(); err != nil {
@@ -85,21 +123,26 @@ func Register(c *fiber.Ctx) error {
 
 	user.Password = nil
 
-	return c.JSON(user)
+	return c.JSON(fiber.Map{
+		"message": "success",
+		"user":    user,
+	})
 }
 
-func saveFile(c *fiber.Ctx, uploadPath, formFieldName string) string {
-	file, err := c.FormFile(formFieldName)
+func saveFile(c *fiber.Ctx, uploadPath string, fileData string) (string, error) {
+	if err := os.MkdirAll(uploadPath, os.ModePerm); err != nil {
+		return "", err
+	}
+
+	fileName := fmt.Sprintf("%d%s", time.Now().UnixNano(), filepath.Ext(fileData))
+	filePath := filepath.Join(uploadPath, fileName)
+	file, err := os.Create(filePath)
 	if err != nil {
-		return ""
+		return "", err
 	}
+	defer file.Close()
 
-	fileName := fmt.Sprintf("%d%s", time.Now().UnixNano(), filepath.Ext(file.Filename))
-	if err := c.SaveFile(file, filepath.Join(uploadPath, fileName)); err != nil {
-		return ""
-	}
-
-	return fileName
+	return filePath, nil
 }
 
 func Login(c *fiber.Ctx) error {
@@ -111,9 +154,9 @@ func Login(c *fiber.Ctx) error {
 
 	var user models.User
 
-	database.DB.Where("email = ?", data["email"]).First(&user)
+	result := database.DB.Where("email = ?", data["email"]).First(&user)
 
-	if user.Id == 0 {
+	if result.RowsAffected == 0 {
 		c.Status(fiber.StatusNotFound)
 		return c.JSON(fiber.Map{
 			"message": "user not found",
@@ -129,9 +172,16 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	if err := bcrypt.CompareHashAndPassword(user.Password, []byte(data["password"])); err != nil {
-		c.Status(fiber.StatusBadRequest)
+		if err == bcrypt.ErrMismatchedHashAndPassword {
+			c.Status(fiber.StatusBadRequest)
+			return c.JSON(fiber.Map{
+				"message": "incorrect email or password",
+			})
+		}
+		c.Status(fiber.StatusInternalServerError)
 		return c.JSON(fiber.Map{
-			"message": "incorrect password",
+			"message": "error comparing password",
+			"error":   err.Error(),
 		})
 	}
 
@@ -145,7 +195,8 @@ func Login(c *fiber.Ctx) error {
 	if err != nil {
 		c.Status(fiber.StatusInternalServerError)
 		return c.JSON(fiber.Map{
-			"message": "couldn't login",
+			"message": "error generating token",
+			"error":   err.Error(),
 		})
 	}
 

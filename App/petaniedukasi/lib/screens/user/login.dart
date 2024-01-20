@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:petaniedukasi/controllers/userController.dart';
 import 'package:petaniedukasi/screens/user/registrasi.dart';
 
 class LoginUser extends StatefulWidget {
@@ -10,6 +11,10 @@ class LoginUser extends StatefulWidget {
 }
 
 class _LoginUserState extends State<LoginUser> {
+  final UserController userController = Get.put(UserController());
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,9 +54,10 @@ class _LoginUserState extends State<LoginUser> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
+                controller: emailController,
               ),
               SizedBox(
-                height: 50,
+                height: 40,
               ),
               TextFormField(
                 decoration: InputDecoration(
@@ -60,13 +66,19 @@ class _LoginUserState extends State<LoginUser> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
+                controller: passwordController,
                 obscureText: true,
               ),
               SizedBox(
                 height: 50,
               ),
               InkWell(
-                onTap: () {},
+                onTap: () async {
+                  await userController.Login(
+                    email: emailController.text,
+                    password: passwordController.text,
+                  );
+                },
                 child: Container(
                   width: MediaQuery.of(context).size.width,
                   padding: EdgeInsets.symmetric(vertical: 16),

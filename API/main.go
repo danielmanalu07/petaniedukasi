@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"petani_edukasi/database"
 	"petani_edukasi/routes"
 
@@ -20,5 +21,8 @@ func main() {
 
 	routes.Setup(app)
 
-	app.Listen(":8080")
+	err := app.Listen("192.168.141.215:8080")
+	if err != nil {
+		log.Fatal(err)
+	}
 }

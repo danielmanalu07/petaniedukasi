@@ -98,10 +98,11 @@ func LoginAdmin(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{
 		"message": "success",
+		"token":   token,
 	})
 }
 
-func Admin(c *fiber.Ctx) error {
+func GetAdmin(c *fiber.Ctx) error {
 	cookie := c.Cookies("jwt")
 
 	token, err := jwt.ParseWithClaims(cookie, &jwt.StandardClaims{}, func(t *jwt.Token) (interface{}, error) {
@@ -119,9 +120,19 @@ func Admin(c *fiber.Ctx) error {
 
 	var admin models.Admin
 
-	database.DB.Where("id = ?", claims.Issuer).First(&admin)
+	err = database.DB.Where("id = ?", claims.Issuer).First(&admin).Error
 
-	return c.JSON(admin)
+	if err != nil {
+		c.Status(fiber.StatusInternalServerError)
+		return c.JSON(fiber.Map{
+			"message": "internal server error",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"Admin": admin,
+		"Token": token,
+	})
 }
 
 func LogoutAdm(c *fiber.Ctx) error {

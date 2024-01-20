@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:petaniedukasi/screens/admin/login.dart';
 import 'package:petaniedukasi/screens/user/login.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -17,7 +18,7 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Container(
           width: MediaQuery.of(context).size.width,
           child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 180),
+            padding: EdgeInsets.symmetric(vertical: 100),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -51,25 +52,46 @@ class _SplashScreenState extends State<SplashScreen> {
                 SizedBox(
                   height: 30,
                 ),
-                InkWell(
-                  onTap: () {
+                ElevatedButton(
+                  onPressed: () {
                     Get.to(LoginUser());
                   },
-                  child: Container(
-                    width: MediaQuery.of(context).size.width - 100,
+                  style: ElevatedButton.styleFrom(
+                    primary: Color(0xFF76B258),
+                    onPrimary: Colors.white,
                     padding: EdgeInsets.symmetric(vertical: 16),
-                    color: Color(0xFF76B258),
-                    child: Center(
-                      child: Text(
-                        "SIGN IN",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
+                    textStyle: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    minimumSize: Size(
+                      MediaQuery.of(context).size.width - 100,
+                      0,
                     ),
                   ),
+                  child: Text("SIGN IN USER"),
+                ),
+                SizedBox(
+                  height: 20,
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Get.to(LoginAdmin());
+                  },
+                  style: ElevatedButton.styleFrom(
+                    primary: Color(0xFF76B258),
+                    onPrimary: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    textStyle: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    minimumSize: Size(
+                      MediaQuery.of(context).size.width - 100,
+                      0,
+                    ),
+                  ),
+                  child: Text("SIGN IN ADMIN"),
                 ),
               ],
             ),

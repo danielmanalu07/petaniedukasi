@@ -33,7 +33,7 @@ func Setup(app *fiber.App) {
 	adminGroup := app.Group("/api/admin")
 	adminGroup.Post("/create", controllers.CreateAdmin)
 	adminGroup.Post("/loginadm", controllers.LoginAdmin)
-	adminGroup.Get("/admin", controllers.Admin)
+	adminGroup.Get("/admin", controllers.GetAdmin)
 	adminGroup.Post("/logout", controllers.LogoutAdm)
 
 	adminGroup.Use(middleware.RequireLogin)
